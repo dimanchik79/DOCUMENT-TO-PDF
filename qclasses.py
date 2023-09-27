@@ -23,7 +23,6 @@ class Ui_MainWindow(object):
         self.progress = None
 
         self.doc_to_convert = {}
-        self.index_path = 0
         self.lists = None
 
     def setupUi(self, MainWindow):
@@ -104,7 +103,7 @@ class Ui_MainWindow(object):
         self.lbl_path_add.setText(self.directory)
 
     def convert(self):
-        error = []
+        error, index, index_path = [], 0, 0
         self.btn_convert.setText("WAIT")
         if self.directory is None:
             err_msg = QtWidgets.QMessageBox()
@@ -120,7 +119,6 @@ class Ui_MainWindow(object):
             return
         self.progress.setMinimum(0)
         self.progress.setMaximum(len(self.doc_to_convert))
-        index = 0
         for path, file in self.doc_to_convert.items():
             try:
                 file_path = f"{self.directory}/{file[:file.rindex('.')]}.pdf"
@@ -132,7 +130,7 @@ class Ui_MainWindow(object):
                 doc.Close()
                 word.Quit()
                 self.list_pdfs.addItem(f"{file[:file.rindex('.')]}.pdf")
-                self.index_path += 1
+                index_path += 1
                 index += 1
                 self.progress.setValue(index)
             except Exception:
@@ -144,12 +142,11 @@ class Ui_MainWindow(object):
         if error:
             err_msg = QtWidgets.QMessageBox()
             err_msg.setWindowTitle("WARRNING")
-            err_msg.setText(f"{string_error(error)}dont converted\n{self.index_path} files converted")
+            err_msg.setText(f"{string_error(error)}dont converted\n{index_path} files converted")
             err_msg.exec_()
         else:
             err_msg = QtWidgets.QMessageBox()
             err_msg.setWindowTitle("CONGRATULATIONS")
             err_msg.setText("All files succesfuly converted!")
             err_msg.exec_()
-        self.index_path, self.index = 0, 0
         self.btn_convert.setText("CONVERT")
