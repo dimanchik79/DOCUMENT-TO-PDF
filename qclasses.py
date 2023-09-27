@@ -1,7 +1,5 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from tkinter import *
-from tkinter.messagebox import showerror
-from tkinter.filedialog import askopenfilenames, askdirectory
+from PyQt5 import QtCore, QtWidgets, QtGui
+import comtypes.client
 
 
 def string_error(err):
@@ -13,10 +11,11 @@ def string_error(err):
 
 class Ui_MainWindow(object):
     def __init__(self):
+        self.directory = None
         self.lbl_path_add = None
         self.lbl_files_add = None
-        self.tree_pdfs = None
-        self.tree_docs = None
+        self.list_pdfs = None
+        self.list_docs = None
         self.btn_add_dir = None
         self.btn_add_doc = None
         self.centralwidget = None
@@ -24,58 +23,59 @@ class Ui_MainWindow(object):
         self.progress = None
 
         self.doc_to_convert = {}
-        self.index = 0
         self.index_path = 0
         self.lists = None
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 622)
+        MainWindow.resize(790, 622)
+        MainWindow.setWindowIcon(QtGui.QIcon("1.png"))
+
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
 
         self.btn_add_doc = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_add_doc.setGeometry(QtCore.QRect(40, 10, 261, 31))
-        self.btn_add_doc.setObjectName("btn_add_doc")
+        self.btn_add_doc.setGeometry(QtCore.QRect(30, 10, 291, 51))
         self.btn_add_doc.clicked.connect(self.get_add_files)
 
         self.btn_add_dir = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_add_dir.setGeometry(QtCore.QRect(470, 10, 281, 31))
-        self.btn_add_dir.setObjectName("btn_add_dir")
-
-        self.tree_docs = QtWidgets.QListWidget(self.centralwidget)
-        self.tree_docs.setGeometry(QtCore.QRect(10, 50, 331, 491))
-        self.tree_docs.setObjectName("tree_docs")
-
-        self.tree_pdfs = QtWidgets.QListView(self.centralwidget)
-        self.tree_pdfs.setGeometry(QtCore.QRect(450, 50, 331, 491))
-        self.tree_pdfs.setObjectName("tree_pdfs")
+        self.btn_add_dir.setGeometry(QtCore.QRect(470, 10, 291, 51))
+        self.btn_add_dir.clicked.connect(self.add_folder)
 
         self.lbl_files_add = QtWidgets.QLabel(self.centralwidget)
         self.lbl_files_add.setGeometry(QtCore.QRect(10, 550, 331, 61))
-        self.lbl_files_add.setStyleSheet(" background-color: green;color: white;")
+        self.lbl_files_add.setStyleSheet(" background-color: green;color: white;border-radius: 5px;")
         self.lbl_files_add.setAlignment(QtCore.Qt.AlignCenter)
-        self.lbl_files_add.setObjectName("lbl_files_add")
 
         self.lbl_path_add = QtWidgets.QLabel(self.centralwidget)
-        self.lbl_path_add.setGeometry(QtCore.QRect(450, 550, 341, 61))
-        self.lbl_path_add.setStyleSheet(" background-color: green;color: white;")
+        self.lbl_path_add.setGeometry(QtCore.QRect(450, 550, 331, 61))
+        self.lbl_path_add.setStyleSheet(" background-color: green;color: white;border-radius: 5px;")
         self.lbl_path_add.setAlignment(QtCore.Qt.AlignCenter)
-        self.lbl_path_add.setObjectName("lbl_path_add")
 
         self.btn_convert = QtWidgets.QPushButton(self.centralwidget)
         self.btn_convert.setGeometry(QtCore.QRect(350, 250, 93, 91))
-        self.btn_convert.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.btn_convert.setStyleSheet("background-image: url(\"convert.ico\")")
-        self.btn_convert.setObjectName("btn_convert")
+        self.btn_convert.clicked.connect(self.convert)
 
         self.progress = QtWidgets.QProgressBar(self.centralwidget)
         self.progress.setGeometry(QtCore.QRect(350, 350, 91, 23))
         self.progress.setProperty("value", 0)
-        self.progress.setObjectName("progress")
 
+        self.list_docs = QtWidgets.QListWidget(self.centralwidget)
+        self.list_docs.setGeometry(QtCore.QRect(10, 70, 331, 471))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        self.list_docs.setFont(font)
+        self.list_docs.setViewMode(QtWidgets.QListView.ListMode)
+
+        self.list_pdfs = QtWidgets.QListWidget(self.centralwidget)
+        self.list_pdfs.setGeometry(QtCore.QRect(450, 70, 331, 471))
+        font = QtGui.QFont()
+        font.setFamily("Calibri")
+        self.list_pdfs.setFont(font)
+        self.list_pdfs.setViewMode(QtWidgets.QListView.ListMode)
 
         MainWindow.setCentralWidget(self.centralwidget)
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -89,19 +89,67 @@ class Ui_MainWindow(object):
         self.btn_convert.setText(_translate("MainWindow", "CONVERT"))
 
     def get_add_files(self):
-        error = []
-        files = askopenfilenames()
+        files = QtWidgets.QFileDialog.getOpenFileNames(filter="*.doc *.docx")[0]
+        if not files:
+            return
         for file in files:
-            if file[file.rindex("."):] not in ['.docx', '.doc']:
-                error.append(f"{file[file.rindex('/') + 1:]}\n")
-            else:
-                self.doc_to_convert[file] = file[file.rindex("/") + 1:]
-        if error:
-            showerror(title="WARRNING!", message=f"This files dont convert:\nRename to .docx\n{string_error(error)}")
-
+            self.doc_to_convert[file] = file[file.rindex("/") + 1:]
         for key, value in self.doc_to_convert.items():
-            self.tree_docs.addItem(value)
+            self.list_docs.addItem(value)
+        self.lbl_files_add.setText(f"{len(self.doc_to_convert)} files selected")
+        self.list_docs.setFocus()
 
-        # self.docx_label.configure(text=f"{len(self.doc_to_convert)} files selected")
-        # self.listbox_docx.select_set(0, 0)
-        # self.listbox_docx.focus_set()
+    def add_folder(self):
+        self.directory = QtWidgets.QFileDialog.getExistingDirectory()
+        self.lbl_path_add.setText(self.directory)
+
+    def convert(self):
+        error = []
+        self.btn_convert.setText("WAIT")
+        if self.directory is None:
+            err_msg = QtWidgets.QMessageBox()
+            err_msg.setWindowTitle("ERROR")
+            err_msg.setText("Add directory when convert")
+            err_msg.exec_()
+            return
+        if self.doc_to_convert == {}:
+            err_msg = QtWidgets.QMessageBox()
+            err_msg.setWindowTitle("ERROR")
+            err_msg.setText("Add files for convert")
+            err_msg.exec_()
+            return
+        self.progress.setMinimum(0)
+        self.progress.setMaximum(len(self.doc_to_convert))
+        index = 0
+        for path, file in self.doc_to_convert.items():
+            try:
+                file_path = f"{self.directory}/{file[:file.rindex('.')]}.pdf"
+                path = path.replace("/", chr(92))
+                file_path = file_path.replace("/", chr(92))
+                word = comtypes.client.CreateObject('Word.Application')
+                doc = word.Documents.Open(path)
+                doc.SaveAs(file_path, FileFormat=17)
+                doc.Close()
+                word.Quit()
+                self.list_pdfs.addItem(f"{file[:file.rindex('.')]}.pdf")
+                self.index_path += 1
+                index += 1
+                self.progress.setValue(index)
+            except Exception:
+                self.list_pdfs.addItem(f"{file} - error")
+                self.progress.setValue(index)
+                index += 1
+                error.append(f"{file}\n")
+
+        if error:
+            err_msg = QtWidgets.QMessageBox()
+            err_msg.setWindowTitle("WARRNING")
+            err_msg.setText(f"{string_error(error)}dont converted\n{self.index_path} files converted")
+            err_msg.exec_()
+        else:
+            err_msg = QtWidgets.QMessageBox()
+            err_msg.setWindowTitle("CONGRATULATIONS")
+            err_msg.setText("All files succesfuly converted!")
+            err_msg.exec_()
+        self.index_path, self.index = 0, 0
+        self.btn_convert.setText("CONVERT")
