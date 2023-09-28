@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 import comtypes.client
+from PyQt5.QtGui import QColor
+from win32com import client
 
 
 def string_error(err):
@@ -81,14 +83,14 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "WORD DOCUMENT TO PDF CONVERTER"))
-        self.btn_add_doc.setText(_translate("MainWindow", "Add DOC, DOCX files"))
+        self.btn_add_doc.setText(_translate("MainWindow", "Add DOC, DOCX, XLS, XLSX files"))
         self.btn_add_dir.setText(_translate("MainWindow", "Add directory for convert"))
         self.lbl_files_add.setText(_translate("MainWindow", "Files not added"))
         self.lbl_path_add.setText(_translate("MainWindow", "Directotry not added"))
         self.btn_convert.setText(_translate("MainWindow", "CONVERT"))
 
     def get_add_files(self):
-        files = QtWidgets.QFileDialog.getOpenFileNames(filter="*.doc *.docx")[0]
+        files = QtWidgets.QFileDialog.getOpenFileNames(filter="*.doc *.docx *.xls *xlsx")[0]
         if not files:
             return
         for file in files:
@@ -104,7 +106,7 @@ class Ui_MainWindow(object):
 
     def convert(self):
         error, index, index_path = [], 0, 0
-        self.btn_convert.setText("WAIT")
+
         if self.directory is None:
             err_msg = QtWidgets.QMessageBox()
             err_msg.setWindowTitle("ERROR")
@@ -117,6 +119,7 @@ class Ui_MainWindow(object):
             err_msg.setText("Add files for convert")
             err_msg.exec_()
             return
+        self.btn_convert.setText("WAIT")
         self.progress.setMinimum(0)
         self.progress.setMaximum(len(self.doc_to_convert))
         for path, file in self.doc_to_convert.items():
@@ -124,17 +127,25 @@ class Ui_MainWindow(object):
                 file_path = f"{self.directory}/{file[:file.rindex('.')]}.pdf"
                 path = path.replace("/", chr(92))
                 file_path = file_path.replace("/", chr(92))
-                word = comtypes.client.CreateObject('Word.Application')
-                doc = word.Documents.Open(path)
-                doc.SaveAs(file_path, FileFormat=17)
-                doc.Close()
-                word.Quit()
+                if file[file.rindex("."):] in [".doc" ,".docx"]:
+                    word = comtypes.client.CreateObject('Word.Application')
+                    doc = word.Documents.Open(path)
+                    doc.SaveAs(file_path, FileFormat=17)
+                    doc.Close()
+                    word.Quit()
+
+                elif file[file.rindex("."):] in [".xls", ".xlsx"]:
+                    excel = client.Dispatch("Excel.Application")
+                    sheets = excel.Workbooks.Open(path)
+                    work_sheets = sheets.Worksheets[0]
+                    work_sheets.ExportAsFixedFormat(0, file_path)
                 self.list_pdfs.addItem(f"{file[:file.rindex('.')]}.pdf")
                 index_path += 1
                 index += 1
                 self.progress.setValue(index)
             except Exception:
                 self.list_pdfs.addItem(f"{file} - error")
+                self.list_pdfs.item(index).setForeground(QColor('red'))
                 self.progress.setValue(index)
                 index += 1
                 error.append(f"{file}\n")
