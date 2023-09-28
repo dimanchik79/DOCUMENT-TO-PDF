@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 import comtypes.client
 from PyQt5.QtGui import QColor
 from win32com import client
+import webbrowser
 
 
 def string_error(err):
@@ -13,6 +14,7 @@ def string_error(err):
 
 class Ui_MainWindow(object):
     def __init__(self):
+        self.file_name = None
         self.directory = None
         self.lbl_path_add = None
         self.lbl_files_add = None
@@ -58,7 +60,7 @@ class Ui_MainWindow(object):
         self.btn_convert.clicked.connect(self.convert)
 
         self.progress = QtWidgets.QProgressBar(self.centralwidget)
-        self.progress.setGeometry(QtCore.QRect(350, 350, 91, 23))
+        self.progress.setGeometry(QtCore.QRect(355, 350, 91, 23))
         self.progress.setProperty("value", 0)
 
         self.list_docs = QtWidgets.QListWidget(self.centralwidget)
@@ -67,6 +69,7 @@ class Ui_MainWindow(object):
         font.setFamily("Calibri")
         self.list_docs.setFont(font)
         self.list_docs.setViewMode(QtWidgets.QListView.ListMode)
+        self.list_docs.doubleClicked.connect(self.ondoubleclick_docum)
 
         self.list_pdfs = QtWidgets.QListWidget(self.centralwidget)
         self.list_pdfs.setGeometry(QtCore.QRect(450, 70, 331, 471))
@@ -74,6 +77,7 @@ class Ui_MainWindow(object):
         font.setFamily("Calibri")
         self.list_pdfs.setFont(font)
         self.list_pdfs.setViewMode(QtWidgets.QListView.ListMode)
+        self.list_pdfs.doubleClicked.connect(self.ondoubleclick_pdfs)
 
         MainWindow.setCentralWidget(self.centralwidget)
 
@@ -105,20 +109,21 @@ class Ui_MainWindow(object):
         self.lbl_path_add.setText(self.directory)
 
     def convert(self):
-        error, index, index_path = [], 0, 0
-
+        error, index, index_path, text_error, err = [], 0, 0, "", True
         if self.directory is None:
+            text_error = "Add directory when convert"
+        elif self.doc_to_convert == {}:
+            text_error = "Add files for convert"
+        else:
+            err = False
+        if err:
             err_msg = QtWidgets.QMessageBox()
+            err_msg.setWindowIcon(QtGui.QIcon("1.png"))
             err_msg.setWindowTitle("ERROR")
-            err_msg.setText("Add directory when convert")
+            err_msg.setText(text_error)
             err_msg.exec_()
             return
-        if self.doc_to_convert == {}:
-            err_msg = QtWidgets.QMessageBox()
-            err_msg.setWindowTitle("ERROR")
-            err_msg.setText("Add files for convert")
-            err_msg.exec_()
-            return
+
         self.btn_convert.setText("WAIT")
         self.progress.setMinimum(0)
         self.progress.setMaximum(len(self.doc_to_convert))
@@ -127,7 +132,7 @@ class Ui_MainWindow(object):
                 file_path = f"{self.directory}/{file[:file.rindex('.')]}.pdf"
                 path = path.replace("/", chr(92))
                 file_path = file_path.replace("/", chr(92))
-                if file[file.rindex("."):] in [".doc" ,".docx"]:
+                if file[file.rindex("."):] in [".doc", ".docx"]:
                     word = comtypes.client.CreateObject('Word.Application')
                     doc = word.Documents.Open(path)
                     doc.SaveAs(file_path, FileFormat=17)
@@ -149,15 +154,30 @@ class Ui_MainWindow(object):
                 self.progress.setValue(index)
                 index += 1
                 error.append(f"{file}\n")
-
         if error:
-            err_msg = QtWidgets.QMessageBox()
-            err_msg.setWindowTitle("WARRNING")
-            err_msg.setText(f"{string_error(error)}dont converted\n{index_path} files converted")
-            err_msg.exec_()
+            text_error = f"{string_error(error)}dont converted\n{index_path} files converted"
         else:
+            text_error = "All files succesfuly converted!"
+        if text_error != "":
             err_msg = QtWidgets.QMessageBox()
-            err_msg.setWindowTitle("CONGRATULATIONS")
-            err_msg.setText("All files succesfuly converted!")
+            err_msg.setWindowIcon(QtGui.QIcon("1.png"))
+            err_msg.setWindowTitle("WARRNING")
+            err_msg.setText(text_error)
             err_msg.exec_()
+
         self.btn_convert.setText("CONVERT")
+        self.progress.setValue(0)
+
+    def ondoubleclick_docum(self):
+        for key, word in self.doc_to_convert.items():
+            if word == self.list_docs.currentItem().text():
+                self.file_name = key
+        index = self.list_docs.currentIndex().row()
+        self.list_docs.item(index).setForeground(QColor('green'))
+        webbrowser.open(self.file_name, new=0, autoraise=True)
+
+    def ondoubleclick_pdfs(self):
+        index = self.list_pdfs.currentIndex().row()
+        self.list_pdfs.item(index).setForeground(QColor('green'))
+        self.file_name = f"{self.directory}/{self.list_pdfs.currentItem().text()}"
+        webbrowser.open(self.file_name, new=0, autoraise=True)
