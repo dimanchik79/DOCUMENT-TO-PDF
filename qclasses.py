@@ -25,7 +25,6 @@ class Ui_MainWindow(object):
         self.centralwidget = None
         self.btn_convert = None
         self.progress = None
-
         self.doc_to_convert = {}
         self.lists = None
 
@@ -97,6 +96,7 @@ class Ui_MainWindow(object):
         files = QtWidgets.QFileDialog.getOpenFileNames(filter="*.doc *.docx *.xls *xlsx")[0]
         if not files:
             return
+        self.list_docs.clear()
         for file in files:
             self.doc_to_convert[file] = file[file.rindex("/") + 1:]
         for key, value in self.doc_to_convert.items():
@@ -124,9 +124,11 @@ class Ui_MainWindow(object):
             err_msg.exec_()
             return
 
+        self.list_pdfs.clear()
         self.btn_convert.setText("WAIT")
         self.progress.setMinimum(0)
         self.progress.setMaximum(len(self.doc_to_convert))
+
         for path, file in self.doc_to_convert.items():
             try:
                 file_path = f"{self.directory}/{file[:file.rindex('.')]}.pdf"
@@ -138,7 +140,6 @@ class Ui_MainWindow(object):
                     doc.SaveAs(file_path, FileFormat=17)
                     doc.Close()
                     word.Quit()
-
                 elif file[file.rindex("."):] in [".xls", ".xlsx"]:
                     excel = client.Dispatch("Excel.Application")
                     sheets = excel.Workbooks.Open(path)
@@ -164,7 +165,6 @@ class Ui_MainWindow(object):
             err_msg.setWindowTitle("WARRNING")
             err_msg.setText(text_error)
             err_msg.exec_()
-
         self.btn_convert.setText("CONVERT")
         self.progress.setValue(0)
 

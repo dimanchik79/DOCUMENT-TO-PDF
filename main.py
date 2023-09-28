@@ -5,10 +5,10 @@ from qclasses import Ui_MainWindow
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
+    window = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    ui.setupUi(window)
+    window.show()
     sys.exit(app.exec_())
 
 
