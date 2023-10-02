@@ -46,12 +46,12 @@ class Ui_MainWindow(object):
 
         self.lbl_files_add = QtWidgets.QLabel(self.centralwidget)
         self.lbl_files_add.setGeometry(QtCore.QRect(10, 550, 331, 61))
-        self.lbl_files_add.setStyleSheet(" background-color: green;color: white;border-radius: 5px;")
+        self.lbl_files_add.setStyleSheet("background-color: green;color: white;border-radius: 5px;")
         self.lbl_files_add.setAlignment(QtCore.Qt.AlignCenter)
 
         self.lbl_path_add = QtWidgets.QLabel(self.centralwidget)
         self.lbl_path_add.setGeometry(QtCore.QRect(450, 550, 331, 61))
-        self.lbl_path_add.setStyleSheet(" background-color: green;color: white;border-radius: 5px;")
+        self.lbl_path_add.setStyleSheet("background-color: green;color: white;border-radius: 5px;")
         self.lbl_path_add.setAlignment(QtCore.Qt.AlignCenter)
 
         self.btn_convert = QtWidgets.QPushButton(self.centralwidget)
@@ -85,11 +85,11 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "WORD DOCUMENT TO PDF CONVERTER"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "DOCUMENT TO PDF CONVERTER"))
         self.btn_add_doc.setText(_translate("MainWindow", "Add DOC, DOCX, XLS, XLSX files"))
         self.btn_add_dir.setText(_translate("MainWindow", "Add directory for convert"))
         self.lbl_files_add.setText(_translate("MainWindow", "Files not added"))
-        self.lbl_path_add.setText(_translate("MainWindow", "Directotry not added"))
+        self.lbl_path_add.setText(_translate("MainWindow", "Directory not added"))
         self.btn_convert.setText(_translate("MainWindow", "CONVERT"))
 
     def get_add_files(self):
@@ -111,7 +111,7 @@ class Ui_MainWindow(object):
     def convert(self):
         error, index, index_path, text_error, err = [], 0, 0, "", True
         if self.directory is None:
-            text_error = "Add directory when convert"
+            text_error = "Add directory when be convert"
         elif self.doc_to_convert == {}:
             text_error = "Add files for convert"
         else:
@@ -145,6 +145,7 @@ class Ui_MainWindow(object):
                     sheets = excel.Workbooks.Open(path)
                     work_sheets = sheets.Worksheets[0]
                     work_sheets.ExportAsFixedFormat(0, file_path)
+                    excel.quit()
                 self.list_pdfs.addItem(f"{file[:file.rindex('.')]}.pdf")
                 index_path += 1
                 index += 1
@@ -158,11 +159,11 @@ class Ui_MainWindow(object):
         if error:
             text_error = f"{string_error(error)}dont converted\n{index_path} files converted"
         else:
-            text_error = "All files succesfuly converted!"
+            text_error = "All files successfully converted!"
         if text_error != "":
             err_msg = QtWidgets.QMessageBox()
             err_msg.setWindowIcon(QtGui.QIcon("1.png"))
-            err_msg.setWindowTitle("WARRNING")
+            err_msg.setWindowTitle("WARNING")
             err_msg.setText(text_error)
             err_msg.exec_()
         self.btn_convert.setText("CONVERT")
