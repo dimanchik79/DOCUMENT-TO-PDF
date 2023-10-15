@@ -13,6 +13,6 @@
 сопоставленным с расширением файла
 
 Дистрибутив можете скачать тут:
-https://disk.yandex.ru/d/LDfVscIGV9m6eg
+https://disk.yandex.ru/d/Y4zGxSbRBEcqzg
 
 Приятной работы!
